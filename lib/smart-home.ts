@@ -4,13 +4,17 @@ interface Device {
   status: 'on' | 'off';
 }
 
-let devices: Device[] = [
+const devices: Device[] = [
   { id: 'light-1', name: 'Living Room Light', status: 'off' },
   { id: 'light-2', name: 'Bedroom Light', status: 'on' },
   { id: 'thermostat-1', name: 'Main Thermostat', status: 'on' },
 ];
 
-export async function controlDevice(deviceId: string, action: 'on' | 'off') {
+type ControlDeviceSuccess = { success: true; device: Device };
+type ControlDeviceError = { success: false; message: string };
+type ControlDeviceResponse = ControlDeviceSuccess | ControlDeviceError;
+
+export async function controlDevice(deviceId: string, action: 'on' | 'off'): Promise<ControlDeviceResponse> {
   const device = devices.find(d => d.id === deviceId);
   if (device) {
     device.status = action;
@@ -25,7 +29,7 @@ export async function getDevices() {
 }
 
 // A function to parse commands and control devices
-export async function handleDeviceCommand(command: string) {
+export async function handleDeviceCommand(command: string): Promise<ControlDeviceResponse | null> {
     const lowerCommand = command.toLowerCase();
 
     // Simple parsing logic

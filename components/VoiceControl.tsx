@@ -5,7 +5,7 @@ export const useVoiceControl = (onCommand: (command: string) => void) => {
   const [isListening, setIsListening] = useState(false);
 
   const startRecognition = () => {
-    const recognition = new (window as any).webkitSpeechRecognition();
+    const recognition = new window.webkitSpeechRecognition();
     recognition.lang = "en-US";
     recognition.onstart = () => {
       setIsListening(true);
@@ -13,7 +13,7 @@ export const useVoiceControl = (onCommand: (command: string) => void) => {
     recognition.onend = () => {
       setIsListening(false);
     };
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       const result = event.results[0][0].transcript;
       onCommand(result);
     };
