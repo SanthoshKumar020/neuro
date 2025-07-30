@@ -1,10 +1,10 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { Orb } from '../components/Orb';
-import { CommandLog } from '../components/CommandLog';
-import { useVoiceControl } from '../components/VoiceControl';
-import { SmartHomePanel } from '../components/SmartHomePanel';
-import { VideoGenerationPanel } from '../components/VideoGenerationPanel';
+import { Orb } from '../../components/Orb';
+import { CommandLog } from '../../components/CommandLog';
+import { useVoiceControl } from '../../components/VoiceControl';
+import { SmartHomePanel } from '../../components/SmartHomePanel';
+import { VideoGenerationPanel } from '../../components/VideoGenerationPanel';
 
 type Log = {
   type: 'user' | 'ai';
