@@ -40,6 +40,15 @@ body {
   box-shadow: 0 0 40px var(--accent-glow), 0 0 60px var(--accent-blue);
 }
 
+.orb-processing {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 @keyframes pulse {
   0% {
     transform: scale(1);
