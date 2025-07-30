@@ -22,6 +22,7 @@ export default function Home() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [videoTopic, setVideoTopic] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const fetchDevices = async () => {
@@ -34,6 +35,7 @@ export default function Home() {
 
   const handleCommand = async (command: string) => {
     setLogs(prev => [...prev, { type: 'user', text: command }]);
+    setIsProcessing(true);
 
     if (command.toLowerCase().includes('create video')) {
       const topic = command.split('create video about ')[1] || 'a random topic';
@@ -48,14 +50,22 @@ export default function Home() {
       body: JSON.stringify({ command }),
     });
 
-    if (!res.body) return;
+    if (!res.body) {
+      setIsProcessing(false);
+      return;
+    }
 
     if (res.headers.get("Content-Type")?.includes("application/json")) {
       const result = await res.json();
-      setLogs(prev => [...prev, { type: 'ai', text: result.reply }]);
-      if (result.device) {
-        setDevices(prev => prev.map(d => d.id === result.device.id ? result.device : d));
+      if (res.ok) {
+        setLogs(prev => [...prev, { type: 'ai', text: result.reply }]);
+        if (result.device) {
+          setDevices(prev => prev.map(d => d.id === result.device.id ? result.device : d));
+        }
+      } else {
+        setLogs(prev => [...prev, { type: 'ai', text: `Error: ${result.error}` }]);
       }
+      setIsProcessing(false);
       return;
     }
 
@@ -93,6 +103,7 @@ export default function Home() {
         }
       }
     }
+    setIsProcessing(false);
   };
 
   const { isListening, startRecognition } = useVoiceControl(handleCommand);
@@ -107,7 +118,7 @@ export default function Home() {
         <CommandLog logs={logs} />
       </div>
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2">
-        <Orb isListening={isListening} onClick={startRecognition} />
+        <Orb isListening={isListening} isProcessing={isProcessing} onClick={startRecognition} />
       </div>
     </main>
   );

@@ -20,12 +20,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ reply: "Video is being generated." });
   }
 
-  const stream = await askGPT(command, true);
-  return new NextResponse(stream as ReadableStream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-    },
-  });
+  try {
+    const stream = await askGPT(command, true);
+    return new NextResponse(stream as ReadableStream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+      },
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
 
