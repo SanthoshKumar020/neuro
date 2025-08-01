@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Button, SafeAreaView, Platform } from 'react-native';
+import { StyleSheet, Text, View, Button, SafeAreaView, Platform, ScrollView } from 'react-native';
 import Voice from '@react-native-community/voice';
 import * as Speech from 'expo-speech';
 import axios from 'axios';
 
-const BACKEND_URL = 'http://localhost:3000/command';
+const BACKEND_URL = 'http://localhost:8000/command';
 
 export default function App() {
-  const [status, setStatus] = useState('idle'); // idle, listening, processing
+  const [status, setStatus] = useState('idle'); // idle, listening, processing, sending, error
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState('');
+  const [backendResponse, setBackendResponse] = useState(null);
 
   const speak = (text) => {
     Speech.speak(text);
@@ -18,16 +19,17 @@ export default function App() {
   const sendToBackend = async (text) => {
     try {
       console.log(`Sending to backend: ${text}`);
-      // The backend doesn't exist yet, so this will fail.
-      // We'll update the status to show we're trying to send.
       setStatus('sending');
+      setBackendResponse(null); // Clear previous response
       const response = await axios.post(BACKEND_URL, { command: text });
       console.log('Backend response:', response.data);
-      speak(`Command sent successfully.`);
+      setBackendResponse(response.data);
+      speak(`Command processed.`);
       setStatus('idle');
     } catch (err) {
       console.error('Error sending to backend:', err.message);
-      setError(`Backend error: ${err.message}. Please ensure the backend server is running.`);
+      const errorMessage = `Backend error: ${err.message}. Make sure the backend server is running on ${BACKEND_URL}.`;
+      setError(errorMessage);
       speak(`I couldn't connect to my brain. Please check the backend server.`);
       setStatus('error');
     }
@@ -44,7 +46,7 @@ export default function App() {
       if (e.value && e.value.length > 0) {
         const recognizedText = e.value[0];
         setTranscript(recognizedText);
-        speak(`You said: ${recognizedText}. Sending to backend.`);
+        speak(`You said: ${recognizedText}. Processing.`);
         sendToBackend(recognizedText);
       } else {
         setStatus('idle');
@@ -65,10 +67,10 @@ export default function App() {
     try {
       setTranscript('');
       setError('');
+      setBackendResponse(null);
       await Voice.start('en-US');
     } catch (e) {
       console.error('Error starting voice recognition:', e);
-      setError(JSON.stringify(e));
     }
   };
 
@@ -84,12 +86,13 @@ export default function App() {
     stopListening();
     setTranscript('');
     setError('');
+    setBackendResponse(null);
     setStatus('idle');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Neura</Text>
         <Text style={styles.subtitle}>Your Offline AI Assistant</Text>
 
@@ -112,12 +115,21 @@ export default function App() {
           <Text style={styles.transcriptText}>{transcript}</Text>
         </View>
 
+        {backendResponse && (
+          <View style={styles.responseContainer}>
+            <Text style={styles.responseLabel}>Backend Response:</Text>
+            <Text style={styles.responseText}>
+              {JSON.stringify(backendResponse, null, 2)}
+            </Text>
+          </View>
+        )}
+
         {error ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
           </View>
         ) : null}
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -129,9 +141,7 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? 30 : 0,
   },
   content: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
     padding: 20,
   },
   title: {
@@ -161,7 +171,7 @@ const styles = StyleSheet.create({
     width: 20,
   },
   transcriptContainer: {
-    marginTop: 20,
+    marginBottom: 20,
     padding: 15,
     backgroundColor: '#fff',
     borderRadius: 8,
@@ -178,6 +188,25 @@ const styles = StyleSheet.create({
   transcriptText: {
     fontSize: 16,
     marginTop: 5,
+  },
+  responseContainer: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#e6f7ff',
+    borderRadius: 8,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#b3e0ff',
+  },
+  responseLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#005f8d',
+  },
+  responseText: {
+    fontSize: 16,
+    marginTop: 5,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   errorContainer: {
     marginTop: 20,
